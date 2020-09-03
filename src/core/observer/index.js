@@ -16,13 +16,13 @@ import {
   isServerRendering
 } from '../util/index'
 
-const arrayKeys = Object.getOwnPropertyNames(arrayMethods)
+const arrayKeys = Object.getOwnPropertyNames(arrayMethods) // 属性名称的数组
 
 /**
  * In some cases we may want to disable observation inside a component's
  * update computation.
  */
-export let shouldObserve: boolean = true
+export let shouldObserve: boolean = true // 是否应该被观察
 
 export function toggleObserving (value: boolean) {
   shouldObserve = value
@@ -34,6 +34,7 @@ export function toggleObserving (value: boolean) {
  * object's property keys into getter/setters that
  * collect dependencies and dispatch updates.
  */
+// 附加到每个被观察对象的观察者类。附加后，观察者将目标对象的属性键转换为getter/setter，收集依赖项并发送更新。
 export class Observer {
   value: any;
   dep: Dep;
@@ -45,9 +46,10 @@ export class Observer {
     this.vmCount = 0
     def(value, '__ob__', this)
     if (Array.isArray(value)) {
-      if (hasProto) {
-        protoAugment(value, arrayMethods)
-      } else {
+      if (hasProto) { // 是否可以使用__proto__
+        protoAugment(value, arrayMethods) // // 通过使用__proto__拦截原型链来强化一个目标对象或者数组
+      } else { // 如果不能使用__proto__
+        // 通过定义隐藏属性来强化目标对象或者数组
         copyAugment(value, arrayMethods, arrayKeys)
       }
       this.observeArray(value)
@@ -84,6 +86,7 @@ export class Observer {
  * Augment a target Object or Array by intercepting
  * the prototype chain using __proto__
  */
+// 通过使用__proto__拦截原型链来强化一个目标对象或者数组
 function protoAugment (target, src: Object) {
   /* eslint-disable no-proto */
   target.__proto__ = src
@@ -107,8 +110,9 @@ function copyAugment (target: Object, src: Object, keys: Array<string>) {
  * returns the new observer if successfully observed,
  * or the existing observer if the value already has one.
  */
+// 尝试为一个值创建一个观察者实例，如果观察成功，返回新的观察者，如果值已经有一个观察者，则返回现有的观察者。
 export function observe (value: any, asRootData: ?boolean): Observer | void {
-  if (!isObject(value) || value instanceof VNode) {
+  if (!isObject(value) || value instanceof VNode) { // 不是对象或者是虚拟节点？
     return
   }
   let ob: Observer | void
@@ -132,6 +136,7 @@ export function observe (value: any, asRootData: ?boolean): Observer | void {
 /**
  * Define a reactive property on an Object.
  */
+// 给对象定义响应式属性
 export function defineReactive (
   obj: Object,
   key: string,
@@ -140,9 +145,9 @@ export function defineReactive (
   shallow?: boolean
 ) {
   const dep = new Dep()
-
+  // Object.getOwnPropertyDescriptor(对象，对象中的属性) 方法返回指定对象上一个自有属性对应的属性描述符。（自有属性指的是直接赋予该对象的属性，不需要从原型链上进行查找的属性）
   const property = Object.getOwnPropertyDescriptor(obj, key)
-  if (property && property.configurable === false) {
+  if (property && property.configurable === false) { // 如果不可配置就停止
     return
   }
 

@@ -70,7 +70,7 @@ function initProps (vm: Component, propsOptions: Object) {
   const isRoot = !vm.$parent
   // root instance props should be converted
   if (!isRoot) {
-    toggleObserving(false)
+    toggleObserving(false) // 不设置
   }
   for (const key in propsOptions) {
     keys.push(key)

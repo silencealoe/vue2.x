@@ -38,6 +38,7 @@ export function isPrimitive (value: any): boolean %checks {
  * Objects from primitive values when we know the value
  * is a JSON-compliant type.
  */
+// 快速对象检查-当我们知道值是JSON兼容类型时，这主要用于区分对象和原始值。
 export function isObject (obj: mixed): boolean %checks {
   return obj !== null && typeof obj === 'object'
 }
