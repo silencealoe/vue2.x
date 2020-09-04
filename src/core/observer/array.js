@@ -2,6 +2,7 @@
  * not type checking this file because flow doesn't play well with
  * dynamically accessing methods on Array prototype
  */
+// 没有对该文件进行类型检查，因为流不能很好地处理数组原型上的动态访问方法
 
 import { def } from '../util/index'
 

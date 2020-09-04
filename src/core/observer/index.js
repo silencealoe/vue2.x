@@ -9,9 +9,9 @@ import {
   hasOwn,
   hasProto,
   isObject,
-  isPlainObject,
-  isPrimitive,
-  isUndef,
+  isPlainObject, // 是否是纯对象
+  isPrimitive, // 是否是原始值
+  isUndef, // 是否是undefined?
   isValidArrayIndex,
   isServerRendering
 } from '../util/index'
@@ -42,7 +42,7 @@ export class Observer {
 
   constructor (value: any) {
     this.value = value
-    this.dep = new Dep()
+    this.dep = new Dep() // 多个可观察对象
     this.vmCount = 0
     def(value, '__ob__', this)
     if (Array.isArray(value)) {
@@ -54,7 +54,7 @@ export class Observer {
       }
       this.observeArray(value)
     } else {
-      this.walk(value)
+      this.walk(value) // 当value是object时
     }
   }
 
@@ -63,16 +63,19 @@ export class Observer {
    * getter/setters. This method should only be called when
    * value type is Object.
    */
+  // 遍历所有属性并将它们转换为getter/setter（响应式属性）
+  // 对象时（响应式属性）
   walk (obj: Object) {
-    const keys = Object.keys(obj)
+    const keys = Object.keys(obj) // 对象的所有属性
     for (let i = 0; i < keys.length; i++) {
-      defineReactive(obj, keys[i])
+      defineReactive(obj, keys[i]) // 给所有对象添加响应
     }
   }
 
   /**
    * Observe a list of Array items.
    */
+  // 数组时
   observeArray (items: Array<any>) {
     for (let i = 0, l = items.length; i < l; i++) {
       observe(items[i])
@@ -111,7 +114,7 @@ function copyAugment (target: Object, src: Object, keys: Array<string>) {
  * or the existing observer if the value already has one.
  */
 // 尝试为一个值创建一个观察者实例，如果观察成功，返回新的观察者，如果值已经有一个观察者，则返回现有的观察者。
-export function observe (value: any, asRootData: ?boolean): Observer | void {
+export function observe (value: any, asRootData: ?boolean): ObserverObserver | void {
   if (!isObject(value) || value instanceof VNode) { // 不是对象或者是虚拟节点？
     return
   }
@@ -158,16 +161,16 @@ export function defineReactive (
     val = obj[key]
   }
 
-  let childOb = !shallow && observe(val)
+  let childOb = !shallow && observe(val) // 如果不隐藏，就观察val
   Object.defineProperty(obj, key, {
     enumerable: true,
     configurable: true,
     get: function reactiveGetter () {
       const value = getter ? getter.call(obj) : val
       if (Dep.target) {
-        dep.depend()
+        dep.depend() // 添加依赖
         if (childOb) {
-          childOb.dep.depend()
+          childOb.dep.depend() // 添加依赖
           if (Array.isArray(value)) {
             dependArray(value)
           }
@@ -178,6 +181,7 @@ export function defineReactive (
     set: function reactiveSetter (newVal) {
       const value = getter ? getter.call(obj) : val
       /* eslint-disable no-self-compare */
+      // 考虑到 NaN === NaN 情况
       if (newVal === value || (newVal !== newVal && value !== value)) {
         return
       }
@@ -203,6 +207,7 @@ export function defineReactive (
  * triggers change notification if the property doesn't
  * already exist.
  */
+// 设置对象的属性。添加新属性并在属性不存在时触发更改通知。
 export function set (target: Array<any> | Object, key: any, val: any): any {
   if (process.env.NODE_ENV !== 'production' &&
     (isUndef(target) || isPrimitive(target))
@@ -211,10 +216,10 @@ export function set (target: Array<any> | Object, key: any, val: any): any {
   }
   if (Array.isArray(target) && isValidArrayIndex(key)) {
     target.length = Math.max(target.length, key)
-    target.splice(key, 1, val)
+    target.splice(key, 1, val) // 替换数组中的值
     return val
   }
-  if (key in target && !(key in Object.prototype)) {
+  if (key in target && !(key in Object.prototype)) { // 改变对象的属性值
     target[key] = val
     return val
   }
@@ -231,7 +236,7 @@ export function set (target: Array<any> | Object, key: any, val: any): any {
     return val
   }
   defineReactive(ob.value, key, val)
-  ob.dep.notify()
+  ob.dep.notify() //  通知watcher更新
   return val
 }
 
@@ -270,6 +275,7 @@ export function del (target: Array<any> | Object, key: any) {
  * Collect dependencies on array elements when the array is touched, since
  * we cannot intercept array element access like property getters.
  */
+// 在接触数组时收集对数组元素的依赖关系，因为我们不能像属性getter那样拦截数组元素访问。
 function dependArray (value: Array<any>) {
   for (let e, i = 0, l = value.length; i < l; i++) {
     e = value[i]

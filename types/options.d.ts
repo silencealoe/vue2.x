@@ -39,7 +39,7 @@ export type AsyncComponentFactory<Data=DefaultData<never>, Methods=DefaultMethod
  * Since there isn't a way to query for the return type of a function, we allow TypeScript
  * to infer from the shape of `Accessors<Computed>` and work backwards.
  */
-export type Accessors<T> = {
+export type Accessors<T> = { // 存取器
   [K in keyof T]: (() => T[K]) | ComputedOptions<T[K]>
 }
 

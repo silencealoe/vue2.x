@@ -23,6 +23,7 @@ let uid = 0
  * and fires callback when the expression value changes.
  * This is used for both the $watch() api and directives.
  */
+//观察程序分析表达式，收集依赖项，并在表达式值为改变。这个用于$watch（）api和指令。
 export default class Watcher {
   vm: Component;
   expression: string;
@@ -125,6 +126,7 @@ export default class Watcher {
   /**
    * Add a dependency to this directive.
    */
+  // 添加依赖
   addDep (dep: Dep) {
     const id = dep.id
     if (!this.newDepIds.has(id)) {
@@ -161,6 +163,7 @@ export default class Watcher {
    * Subscriber interface.
    * Will be called when a dependency changes.
    */
+  // 当依赖发生改变时会被调用
   update () {
     /* istanbul ignore else */
     if (this.lazy) {
@@ -186,7 +189,7 @@ export default class Watcher {
         // have mutated.
         isObject(value) ||
         this.deep
-      ) {
+      ) { // 深度监听
         // set new value
         const oldValue = this.value
         this.value = value

@@ -9,7 +9,7 @@ import { query } from './util/index'
 import { compileToFunctions } from './compiler/index'
 import { shouldDecodeNewlines, shouldDecodeNewlinesForHref } from './util/compat'
 
-const idToTemplate = cached(id => {
+const idToTemplate = cached(id => { // 根据元素id查找生成模板
   const el = query(id)
   return el && el.innerHTML
 })
@@ -19,7 +19,7 @@ Vue.prototype.$mount = function (
   el?: string | Element,
   hydrating?: boolean
 ): Component {
-  el = el && query(el)
+  el = el && query(el) // query() 查找页面元素/生成一个元素
 
   /* istanbul ignore if */
   if (el === document.body || el === document.documentElement) {
