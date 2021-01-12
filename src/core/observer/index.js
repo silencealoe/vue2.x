@@ -1,4 +1,11 @@
 /* @flow */
+// 响应式原理
+// 初始化时，Oberver给data中的每一个属性都通过Object.definePropoty()转换成getter/setter来追踪数据变化
+// 当读取这个属性时,会触发getter给读取的数据添加（dep）一个依赖（watcher）
+// 当修改属性值时， 会触发setter 向dep中的依赖（watcher）发送通知（dep.notify()）,watcher收到通知后，触发视图更新操作
+
+//数组
+// 遍历数组的每一项，给每一项添加响应式， 通过拦截数组的原型方法（改变数组自身的方法）来观测数组的变化
 
 import Dep from './dep'
 import VNode from '../vdom/vnode'
@@ -16,7 +23,7 @@ import {
   isServerRendering
 } from '../util/index'
 
-const arrayKeys = Object.getOwnPropertyNames(arrayMethods) // 属性名称的数组
+const arrayKeys = Object.getOwnPropertyNames(arrayMethods) // 属性名称的数组(数组的方法名字)
 
 /**
  * In some cases we may want to disable observation inside a component's
@@ -35,24 +42,27 @@ export function toggleObserving (value: boolean) {
  * collect dependencies and dispatch updates.
  */
 // 附加到每个被观察对象的观察者类。附加后，观察者将目标对象的属性键转换为getter/setter，收集依赖项并发送更新。
+// Observer（）遍历数组中的每一个元素及深度遍历对象的每一个元素，给他们添加getter/setter
 export class Observer {
   value: any;
   dep: Dep;
-  vmCount: number; // number of vms that have this object as root $data
+  vmCount: number; // number of vms that have this object as root $data该实例被调用次数（组件的使用次数）
 
   constructor (value: any) {
     this.value = value
-    this.dep = new Dep() // 多个可观察对象
+    this.dep = new Dep() // 用来收集数组依赖
     this.vmCount = 0
-    def(value, '__ob__', this)
-    if (Array.isArray(value)) {
-      if (hasProto) { // 是否可以使用__proto__
+    // def() 给对象添加属性及属性描述符
+    def(value, '__ob__', this) // 给value加上_ob_属性，值为value的Observer实例，表示value已经被转为响应式
+    if (Array.isArray(value)) { // 是数组时的响应式处理
+      if (hasProto) { // 是否可以使用__proto__ 浏览器兼容
         protoAugment(value, arrayMethods) // // 通过使用__proto__拦截原型链来强化一个目标对象或者数组
       } else { // 如果不能使用__proto__
         // 通过定义隐藏属性来强化目标对象或者数组
+        // arrayMethods = Array.prototype arrayKeys数组的所有属性名称
         copyAugment(value, arrayMethods, arrayKeys)
       }
-      this.observeArray(value)
+      this.observeArray(value) // 深度监听数组
     } else {
       this.walk(value) // 当value是object时
     }
@@ -92,7 +102,7 @@ export class Observer {
 // 通过使用__proto__拦截原型链来强化一个目标对象或者数组
 function protoAugment (target, src: Object) {
   /* eslint-disable no-proto */
-  target.__proto__ = src
+  target.__proto__ = src // arr._proto_ = Array.prototype
   /* eslint-enable no-proto */
 }
 
@@ -103,8 +113,8 @@ function protoAugment (target, src: Object) {
 /* istanbul ignore next */
 function copyAugment (target: Object, src: Object, keys: Array<string>) {
   for (let i = 0, l = keys.length; i < l; i++) {
-    const key = keys[i]
-    def(target, key, src[key])
+    const key = keys[i] // push, pop...
+    def(target, key, src[key]) // arr.push = Array.prototype.push
   }
 }
 
@@ -113,13 +123,13 @@ function copyAugment (target: Object, src: Object, keys: Array<string>) {
  * returns the new observer if successfully observed,
  * or the existing observer if the value already has one.
  */
-// 尝试为一个值创建一个观察者实例，如果观察成功，返回新的观察者，如果值已经有一个观察者，则返回现有的观察者。
+// 尝试为一个值创建一个观察者实例，如果观察成功，返回新的观察者，如果值已经有一个观察者，则返回现有的观察者。                                                          
 export function observe (value: any, asRootData: ?boolean): ObserverObserver | void {
   if (!isObject(value) || value instanceof VNode) { // 不是对象或者是虚拟节点？
     return
   }
   let ob: Observer | void
-  if (hasOwn(value, '__ob__') && value.__ob__ instanceof Observer) {
+  if (hasOwn(value, '__ob__') && value.__ob__ instanceof Observer) { // 如果存在_ob_属性，则已经被转换为响应式了
     ob = value.__ob__
   } else if (
     shouldObserve &&
@@ -167,10 +177,10 @@ export function defineReactive (
     configurable: true,
     get: function reactiveGetter () {
       const value = getter ? getter.call(obj) : val
-      if (Dep.target) {
+      if (Dep.target) { // !target表示是否添加依赖,这里表示未添加依赖
         dep.depend() // 添加依赖
         if (childOb) {
-          childOb.dep.depend() // 添加依赖
+          childOb.dep.depend() // 添加依赖 这里的dep是Observer中的
           if (Array.isArray(value)) {
             dependArray(value)
           }
@@ -207,7 +217,7 @@ export function defineReactive (
  * triggers change notification if the property doesn't
  * already exist.
  */
-// 设置对象的属性。添加新属性并在属性不存在时触发更改通知。
+// 设置对象的属性。添加新属性并在属性不存在时触发更改通知。 $set
 export function set (target: Array<any> | Object, key: any, val: any): any {
   if (process.env.NODE_ENV !== 'production' &&
     (isUndef(target) || isPrimitive(target))
@@ -243,7 +253,7 @@ export function set (target: Array<any> | Object, key: any, val: any): any {
 /**
  * Delete a property and trigger change if necessary.
  */
-export function del (target: Array<any> | Object, key: any) {
+export function del (target: Array<any> | Object, key: any) { 
   if (process.env.NODE_ENV !== 'production' &&
     (isUndef(target) || isPrimitive(target))
   ) {

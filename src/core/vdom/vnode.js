@@ -1,5 +1,14 @@
 /* @flow */
+// Vue是数据驱动视图的，数据发生变化视图就要随之更新，在更新视图的时候难免要操作DOM,而操作真实DOM又是非常耗费性能的
+// 这是因为浏览器的标准就把 DOM 设计的非常复杂，所以一个真正的 DOM 元素是非常庞大的
+// 使用js模拟dom节点（虚拟dom），每次数据改变，新旧虚拟dom进行对比，通过DOM-Diff算法计算出需要更新的地方，然后去更新需要更新的视图
 
+// 通过VNode实例化不同的虚拟Dom节点
+
+//VNode的作用
+// 在视图渲染之前，把写好的template模板先编译成VNode并缓存下来
+// 等到数据发生变化页面需要重新渲染的时候,我们把数据发生变化后生成的VNode与前一次缓存下来的VNode进行对比，找出差异，
+// 然后有差异的VNode对应的真实DOM节点就是需要重新渲染的节点，最后根据有差异的VNode创建出真实的DOM节点再插入到视图中，最终完成一次视图更新
 export default class VNode {
   tag: string | void;
   data: VNodeData | void;
@@ -71,22 +80,22 @@ export default class VNode {
   }
 }
 
-export const createEmptyVNode = (text: string = '') => {
+export const createEmptyVNode = (text: string = '') => { // 注释节点
   const node = new VNode()
   node.text = text
   node.isComment = true
   return node
 }
 
-export function createTextVNode (val: string | number) {
+export function createTextVNode (val: string | number) { // 文本节点
   return new VNode(undefined, undefined, undefined, String(val))
 }
 
-// optimized shallow clone
+// optimized shallow clone 优化克隆
 // used for static nodes and slot nodes because they may be reused across
 // multiple renders, cloning them avoids errors when DOM manipulations rely
 // on their elm reference.
-export function cloneVNode (vnode: VNode): VNode {
+export function cloneVNode (vnode: VNode): VNode { // 克隆节点
   const cloned = new VNode(
     vnode.tag,
     vnode.data,

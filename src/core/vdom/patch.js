@@ -9,7 +9,7 @@
  * Not type-checking this because this file is perf-critical and the cost
  * of making flow understand it is not worth it.
  */
-
+// 以新的VNode为基准，改造旧的oldVNode使之成为跟新的VNode一样，这就是patch过程要干的事。
 import VNode, { cloneVNode } from './vnode'
 import config from '../config'
 import { SSR_ATTR } from 'shared/constants'
@@ -96,7 +96,7 @@ export function createPatchFunction (backend) {
     return remove
   }
 
-  function removeNode (el) {
+  function removeNode (el) { // 删除节点
     const parent = nodeOps.parentNode(el)
     // element may have already been removed due to v-html / v-text
     if (isDef(parent)) {
@@ -121,8 +121,8 @@ export function createPatchFunction (backend) {
   }
 
   let creatingElmInVPre = 0
-
-  function createElm (
+// aaaaaaaaaaaaaaaaaa
+  function createElm ( // 创建节点
     vnode,
     insertedVnodeQueue,
     parentElm,
@@ -498,7 +498,7 @@ export function createPatchFunction (backend) {
     }
   }
 
-  function patchVnode (
+  function patchVnode ( // 更新节点
     oldVnode,
     vnode,
     insertedVnodeQueue,

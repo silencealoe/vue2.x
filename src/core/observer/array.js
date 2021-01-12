@@ -7,9 +7,10 @@
 import { def } from '../util/index'
 
 const arrayProto = Array.prototype
+// 创建一个对象作为拦截器
 export const arrayMethods = Object.create(arrayProto)
 
-const methodsToPatch = [
+const methodsToPatch = [ // 改变数组自身的方法
   'push',
   'pop',
   'shift',
@@ -38,7 +39,7 @@ methodsToPatch.forEach(function (method) {
         inserted = args.slice(2)
         break
     }
-    if (inserted) ob.observeArray(inserted)
+    if (inserted) ob.observeArray(inserted) // 对数组中新添加的元素添加响应式
     // notify change
     ob.dep.notify()
     return result

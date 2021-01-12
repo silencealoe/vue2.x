@@ -59,8 +59,8 @@ export default class Watcher {
     if (options) {
       this.deep = !!options.deep
       this.user = !!options.user
-      this.lazy = !!options.lazy
-      this.sync = !!options.sync
+      this.lazy = !!options.lazy // v-model不同步，是去焦点才更新
+      this.sync = !!options.sync // 
       this.before = options.before
     } else {
       this.deep = this.user = this.lazy = this.sync = false
