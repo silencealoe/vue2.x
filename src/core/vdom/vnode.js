@@ -98,7 +98,7 @@ export function createTextVNode (val: string | number) { // 文本节点
 export function cloneVNode (vnode: VNode): VNode { // 克隆节点
   const cloned = new VNode(
     vnode.tag,
-    vnode.data,
+    vnode.data, // 节点对应的数据对象
     // #7975
     // clone children array to avoid mutating original in case of cloning
     // a child.
