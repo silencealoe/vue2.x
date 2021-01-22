@@ -23,8 +23,8 @@ const startTagClose = /^\s*(\/?)>/
 const endTag = new RegExp(`^<\\/${qnameCapture}[^>]*>`)
 const doctype = /^<!DOCTYPE [^>]+>/i
 // #7298: escape - to avoid being passed as HTML comment when inlined in page
-const comment = /^<!\--/
-const conditionalComment = /^<!\[/
+const comment = /^<!\--/ // 注释
+const conditionalComment = /^<!\[/ // 条件注释
 
 // Special Elements (can contain anything)
 export const isPlainTextElement = makeMap('script,style,textarea', true)
@@ -64,30 +64,40 @@ export function parseHTML (html, options) {
     if (!lastTag || !isPlainTextElement(lastTag)) {
       let textEnd = html.indexOf('<')
       if (textEnd === 0) {
-        // Comment:
+        // Comment: const comment = /^<!\--/
+        // 解析注释<!-- -->
         if (comment.test(html)) {
+          // 若为注释，则继续查找是否存在'-->'
           const commentEnd = html.indexOf('-->')
-
+           // 若存在 '-->',继续判断options中是否保留注释
           if (commentEnd >= 0) {
             if (options.shouldKeepComment) {
+              // 若保留注释，则把注释截取出来传给options.comment，创建注释类型的AST节点
+              // 调用4个钩子函数中的comment,将真实的注释内容传进去，创建注释类型的AST节点
               options.comment(html.substring(4, commentEnd), index, index + commentEnd + 3)
             }
+            // 若不保留注释，则将游标移动到'-->'之后，继续向后解析
             advance(commentEnd + 3)
             continue
           }
         }
 
         // http://en.wikipedia.org/wiki/Conditional_comment#Downlevel-revealed_conditional_comment
+        // 解析条件注释
+        // 
         if (conditionalComment.test(html)) {
+          // 若为条件注释，则继续查找是否存在']>'
           const conditionalEnd = html.indexOf(']>')
 
           if (conditionalEnd >= 0) {
+            // 若存在 ']>',则从原本的html字符串中把条件注释截掉，
+            // 把剩下的内容重新赋给html，继续向后匹配
             advance(conditionalEnd + 2)
             continue
           }
         }
 
-        // Doctype:
+        // Doctype: 解析是否是doctype
         const doctypeMatch = html.match(doctype)
         if (doctypeMatch) {
           advance(doctypeMatch[0].length)
@@ -103,7 +113,7 @@ export function parseHTML (html, options) {
           continue
         }
 
-        // Start tag:
+        // Start tag: 解析开始标签
         const startTagMatch = parseStartTag()
         if (startTagMatch) {
           handleStartTag(startTagMatch)
@@ -179,21 +189,32 @@ export function parseHTML (html, options) {
   // Clean up any remaining tags
   parseEndTag()
 
-  function advance (n) {
+  function advance (n) { // 移动解析游标
     index += n
-    html = html.substring(n)
+    html = html.substring(n) // 将剩下的字符串重新赋值给html，继续向后匹配
   }
 
   function parseStartTag () {
+    // const ncname = '[a-zA-Z_][\\w\\-\\.]*'
+    // const qnameCapture = `((?:${ncname}\\:)?${ncname})`
+    // const startTagOpen = new RegExp(`^<${qnameCapture}`)
+    // 以开始标签开始的模板：
+    // '<div></div>'.match(startTagOpen)  => ['<div','div',index:0,input:'<div></div>']
+    // 以结束标签开始的模板：
+    // '</div><div></div>'.match(startTagOpen) => null
+    // 以文本开始的模板：
+    // '我是文本</p>'.match(startTagOpen) => null
     const start = html.match(startTagOpen)
     if (start) {
       const match = {
-        tagName: start[1],
+        tagName: start[1], // 标签名称
         attrs: [],
         start: index
       }
-      advance(start[0].length)
+      advance(start[0].length) // 截掉<div 
       let end, attr
+      // const dynamicArgAttribute = /^\s*((?:v-[\w-]+:|@|:|#)\[[^=]+\][^\s"'<>\/=]*)(?:\s*(=)\s*(?:"([^"]*)"+|'([^']*)'+|([^\s"'=<>`]+)))?/
+      // const attribute = /^\s*([^\s"'<>\/=]+)(?:\s*(=)\s*(?:"([^"]*)"+|'([^']*)'+|([^\s"'=<>`]+)))?/
       while (!(end = html.match(startTagClose)) && (attr = html.match(dynamicArgAttribute) || html.match(attribute))) {
         attr.start = index
         advance(attr[0].length)

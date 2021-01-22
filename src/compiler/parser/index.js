@@ -74,12 +74,13 @@ export function createASTElement (
 }
 
 /**
- * Convert HTML string to AST.
+ * Convert HTML string to AST. 将模板字符转为ast
  */
+
 export function parse (
-  template: string,
-  options: CompilerOptions
-): ASTElement | void {
+  template: string, // 待转换的模板字符串
+  options: CompilerOptions // 转换时所需要的选项
+): ASTElement | void { // 返回ast
   warn = options.warn || baseWarn
 
   platformIsPreTag = options.isPreTag || no
@@ -200,7 +201,10 @@ export function parse (
       )
     }
   }
-
+  // 在parseHTML 函数解析模板字符串的过程中，
+  // 如果遇到文本信息，就会调用文本解析器parseText函数进行文本解析；
+  // 如果遇到文本中包含过滤器，就会调用过滤器解析器parseFilters函数进行解析
+  // template 待转换的模板字符串 ,
   parseHTML(template, {
     warn,
     expectHTML: options.expectHTML,
@@ -210,6 +214,9 @@ export function parse (
     shouldDecodeNewlinesForHref: options.shouldDecodeNewlinesForHref,
     shouldKeepComment: options.comments,
     outputSourceRange: options.outputSourceRange,
+    // 当解析到开始标签时，调用钩子函数
+    // 四个钩子函数作用： 当解析器解析出不同的内容时调用不同的钩子函数从而生成不同的AST（把parse中提取出来的内容生成AST）
+    // tag: 标签名， attrs： 标签属性 unary: 标签是否自闭合，
     start (tag, attrs, unary, start, end) {
       // check namespace.
       // inherit parent ns if there is one
@@ -220,7 +227,7 @@ export function parse (
       if (isIE && ns === 'svg') {
         attrs = guardIESVGBug(attrs)
       }
-
+      // createASTElement 创建元素类型的ast节点
       let element: ASTElement = createASTElement(tag, attrs, currentParent)
       if (ns) {
         element.ns = ns
@@ -296,7 +303,7 @@ export function parse (
         closeElement(element)
       }
     },
-
+    // 当解析到结束标签时 tag: 标签名称
     end (tag, start, end) {
       const element = stack[stack.length - 1]
       // pop stack
@@ -307,7 +314,7 @@ export function parse (
       }
       closeElement(element)
     },
-
+    // 当解析到文本时，调用该函数
     chars (text: string, start: number, end: number) {
       if (!currentParent) {
         if (process.env.NODE_ENV !== 'production') {
@@ -357,7 +364,7 @@ export function parse (
         }
         let res
         let child: ?ASTNode
-        if (!inVPre && text !== ' ' && (res = parseText(text, delimiters))) {
+        if (!inVPre && text !== ' ' && (res = parseText(text, delimiters))) { // text是带变量的文本
           child = {
             type: 2,
             expression: res.expression,
@@ -379,6 +386,7 @@ export function parse (
         }
       }
     },
+    // 当解析到注释时，调用该函数
     comment (text: string, start, end) {
       // adding anything as a sibling to the root node is forbidden
       // comments should still be allowed, but ignored
