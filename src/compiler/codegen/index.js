@@ -6,6 +6,10 @@ import { camelize, no, extend } from 'shared/util'
 import { baseWarn, pluckModuleFunction } from '../helpers'
 import { emptySlotScopeToken } from '../parser/index'
 
+// render()函数可以是手写，也可以是vue自己生成
+// 当用户手写了render函数时，那么Vue在挂载该组件的时候就会调用用户手写的这个render函数。
+// 那如果用户没有写呢？那这个时候Vue就要自己根据模板内容生成一个render函数供组件挂载的时候调用
+
 type TransformFunction = (el: ASTElement, code: string) => string;
 type DataGenFunction = (el: ASTElement) => string;
 type DirectiveFunction = (el: ASTElement, dir: ASTDirective, warn: Function) => boolean;
@@ -41,7 +45,7 @@ export type CodegenResult = {
 };
 
 export function generate (
-  ast: ASTElement | void,
+  ast: ASTElement | void, // 优化后的ast
   options: CompilerOptions
 ): CodegenResult {
   const state = new CodegenState(options)
@@ -76,11 +80,13 @@ export function genElement (el: ASTElement, state: CodegenState): string {
       code = genComponent(el.component, el, state)
     } else {
       let data
+      // el.plain 判断节点是否有属性， true表示无属性， data为undefined， 有属性则genData函数获取节点属性data数据
       if (!el.plain || (el.pre && state.maybeComponent(el))) {
-        data = genData(el, state)
+        data = genData(el, state) // 获取节点的属性
       }
-
-      const children = el.inlineTemplate ? null : genChildren(el, state, true)
+      // 生成元素节点的render函数就是生成一个_c()函数调用的字符串, 
+      // _c()函数接收三个参数，分别是节点的标签名tagName，节点属性data，节点的子节点列表children
+      const children = el.inlineTemplate ? null : genChildren(el, state, true) // 获取节点的子节点列表
       code = `_c('${el.tag}'${
         data ? `,${data}` : '' // data
       }${
@@ -216,7 +222,7 @@ export function genFor (
     '})'
 }
 
-export function genData (el: ASTElement, state: CodegenState): string {
+export function genData (el: ASTElement, state: CodegenState): string { // 拼接data属性数据
   let data = '{'
 
   // directives first.
@@ -235,7 +241,7 @@ export function genData (el: ASTElement, state: CodegenState): string {
   if (el.refInFor) {
     data += `refInFor:true,`
   }
-  // pre
+  // pre、 v-pre 跳过这个元素和它的子元素的编译过程 <span v-pre>{{ this will not be compiled }}</span>   显示的是{{ this will not be compiled }}
   if (el.pre) {
     data += `pre:true,`
   }
@@ -523,22 +529,24 @@ function needsNormalization (el: ASTElement): boolean {
 }
 
 function genNode (node: ASTNode, state: CodegenState): string {
-  if (node.type === 1) {
+  if (node.type === 1) { // 元素节点
     return genElement(node, state)
-  } else if (node.type === 3 && node.isComment) {
+  } else if (node.type === 3 && node.isComment) { // 纯文本节点 注释节点
     return genComment(node)
   } else {
     return genText(node)
   }
 }
 
+// _v(text) 创建文本型节点，接受文本内容作为参数 如果文本是动态文本，则使用动态文本AST节点的expression属性，如果是纯静态文本，则使用text属性
 export function genText (text: ASTText | ASTExpression): string {
-  return `_v(${text.type === 2
+  return `_v(${text.type === 2 // 动态文本节点
     ? text.expression // no need for () because already wrapped in _s()
     : transformSpecialNewlines(JSON.stringify(text.text))
   })`
 }
 
+// 注释节点_e(text)函数来创建，接收注释内容作为参数
 export function genComment (comment: ASTText): string {
   return `_e(${JSON.stringify(comment.text)})`
 }

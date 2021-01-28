@@ -26,7 +26,7 @@ import {
  * how to merge a parent option value and a child option
  * value into the final value.
  */
-const strats = config.optionMergeStrategies
+const strats = config.optionMergeStrategies // 合并策略
 
 /**
  * Options with restrictions
@@ -141,8 +141,11 @@ strats.data = function (
 }
 
 /**
- * Hooks and props are merged as arrays.
+ * Hooks and props are merged as arrays. 
  */
+// 如果 childVal不存在，就返回 parentVal；
+// 否则再判断是否存在 parentVal，如果存在就把 childVal 添加到 parentVal 后返回新数组；
+// 否则返回 childVal 的数组。
 function mergeHook (
   parentVal: ?Array<Function>,
   childVal: ?Function | ?Array<Function>
@@ -155,7 +158,7 @@ function mergeHook (
         : [childVal]
     : parentVal
   return res
-    ? dedupeHooks(res)
+    ? dedupeHooks(res)  // 去除数组中的重复钩子
     : res
 }
 
@@ -408,9 +411,11 @@ export function mergeOptions (
   // Only merged options has the _base property.
   if (!child._base) {
     if (child.extends) {
+      // 合并extends
       parent = mergeOptions(parent, child.extends, vm)
     }
     if (child.mixins) {
+      // 合并mixins
       for (let i = 0, l = child.mixins.length; i < l; i++) {
         parent = mergeOptions(parent, child.mixins[i], vm)
       }
@@ -418,7 +423,9 @@ export function mergeOptions (
   }
 
   const options = {}
+  // 创建一个空的options 
   let key
+  // 遍历parent 将
   for (key in parent) {
     mergeField(key)
   }
@@ -427,7 +434,7 @@ export function mergeOptions (
       mergeField(key)
     }
   }
-  function mergeField (key) {
+  function mergeField (key) { // 不同的option对应不同的合并策略 defaultStrat默认合并策略
     const strat = strats[key] || defaultStrat
     options[key] = strat(parent[key], child[key], vm, key)
   }

@@ -13,6 +13,7 @@ import { extend, mergeOptions, formatComponentName } from '../util/index'
 let uid = 0
 
 export function initMixin (Vue: Class<Component>) {
+  // 给Vue原型上绑定_init()方法
   Vue.prototype._init = function (options?: Object) {
     const vm: Component = this
     // a uid
@@ -28,7 +29,7 @@ export function initMixin (Vue: Class<Component>) {
 
     // a flag to avoid this being observed
     vm._isVue = true
-    // merge options
+    // merge options 合并options
     if (options && options._isComponent) {
       // optimize internal component instantiation 优化内部组件实例化
       // since dynamic options merging is pretty slow, and none of the
@@ -36,9 +37,11 @@ export function initMixin (Vue: Class<Component>) {
       // 因为动态选项合并非常慢，而且没有任何内部组件选项需要特殊处理。
       initInternalComponent(vm, options)
     } else {
+      // 将resolveConstructorOptions(vm.constructor) 的返回值和 options 做合并
+      // resolveConstructorOptions相当于vue.options
       vm.$options = mergeOptions(
-        resolveConstructorOptions(vm.constructor),
-        options || {},
+        resolveConstructorOptions(vm.constructor), // parent options
+        options || {}, // child options
         vm
       )
     }
@@ -50,14 +53,14 @@ export function initMixin (Vue: Class<Component>) {
     }
     // expose real self
     vm._self = vm
-    initLifecycle(vm)
-    initEvents(vm)
-    initRender(vm)
-    callHook(vm, 'beforeCreate')
+    initLifecycle(vm) // 初始化生命周期
+    initEvents(vm) // 初始化事件
+    initRender(vm) // 初始化渲染
+    callHook(vm, 'beforeCreate') // 调用生命周期钩子函数
     initInjections(vm) // resolve injections before data/props
-    initState(vm)
+    initState(vm) // 初始化props,methods,data,computed,watch
     initProvide(vm) // resolve provide after data/props
-    callHook(vm, 'created')
+    callHook(vm, 'created') // 调用生命周期钩子函数
 
     /* istanbul ignore if */
     if (process.env.NODE_ENV !== 'production' && config.performance && mark) {
@@ -66,7 +69,9 @@ export function initMixin (Vue: Class<Component>) {
       measure(`vue ${vm._name} init`, startTag, endTag)
     }
 
-    if (vm.$options.el) {
+    if (vm.$options.el) { // 判断用户是否传入了el选项
+      // 如果传入了则调用$mount函数进入模板编译与挂载阶段
+      // 如果没有传入el选项，则不进入下一个生命周期阶段，需要用户手动执行vm.$mount方法才进入下一个生命周期阶段
       vm.$mount(vm.$options.el)
     }
   }

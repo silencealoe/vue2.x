@@ -50,7 +50,16 @@ export function initGlobalAPI (Vue: GlobalAPI) {
     observe(obj)
     return obj
   }
-
+  {/* ASSET_TYPES 的定义在 src/shared/constants.js */}
+{/* export const ASSET_TYPES = [
+  'component',
+  'directive',
+  'filter'
+] */}
+{/* 通过遍历后*/}
+{/* Vue.options.components = {}
+Vue.options.directives = {}
+Vue.options.filters = {} */}
   Vue.options = Object.create(null)
   ASSET_TYPES.forEach(type => {
     Vue.options[type + 's'] = Object.create(null)
@@ -60,7 +69,9 @@ export function initGlobalAPI (Vue: GlobalAPI) {
   // components with in Weex's multi-instance scenarios.
   Vue.options._base = Vue
 
+  {/* 通过 extend(Vue.options.components, builtInComponents) 把一些内置组件扩展到 Vue.options.components 上 */}
   extend(Vue.options.components, builtInComponents)
+  {/* builtInComponents 内置组件 */}
 
   initUse(Vue)
   initMixin(Vue)
